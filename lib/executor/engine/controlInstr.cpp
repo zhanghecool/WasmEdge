@@ -92,19 +92,19 @@ Expect<void> Executor::runBrTableOp(Runtime::StoreManager &StoreMgr,
 }
 
 Expect<void> Executor::runReturnOp(AST::InstrView::iterator &PC) {
-  PC = StackMgr.getBottomLabel().From;
-  StackMgr.popFrame();
+  PC = StackMgr.popFrame();
   return {};
 }
 
 Expect<void> Executor::runCallOp(Runtime::StoreManager &StoreMgr,
                                  const AST::Instruction &Instr,
-                                 AST::InstrView::iterator &PC) {
+                                 AST::InstrView::iterator &PC,
+                                 const bool IsTailCall) {
   // Get Function address.
   const auto *ModInst = *StoreMgr.getModule(StackMgr.getModuleAddr());
   const uint32_t FuncAddr = *ModInst->getFuncAddr(Instr.getTargetIndex());
   const auto *FuncInst = *StoreMgr.getFunction(FuncAddr);
-  if (auto Res = enterFunction(StoreMgr, *FuncInst, PC + 1); !Res) {
+  if (auto Res = enterFunction(StoreMgr, *FuncInst, PC + 1, IsTailCall); !Res) {
     return Unexpect(Res);
   } else {
     PC = (*Res) - 1;
@@ -114,8 +114,9 @@ Expect<void> Executor::runCallOp(Runtime::StoreManager &StoreMgr,
 
 Expect<void> Executor::runCallIndirectOp(Runtime::StoreManager &StoreMgr,
                                          const AST::Instruction &Instr,
-                                         AST::InstrView::iterator &PC) {
-  // Get Table Instance
+                                         AST::InstrView::iterator &PC,
+                                         const bool IsTailCall) {
+  // Get Table Instance.
   const auto *TabInst = getTabInstByIdx(StoreMgr, Instr.getSourceIndex());
 
   // Get function type at index x.
@@ -158,7 +159,9 @@ Expect<void> Executor::runCallIndirectOp(Runtime::StoreManager &StoreMgr,
         FuncType.getParamTypes(), FuncType.getReturnTypes()));
     return Unexpect(ErrCode::IndirectCallTypeMismatch);
   }
-  if (auto Res = enterFunction(StoreMgr, *FuncInst, PC + 1); !Res) {
+
+  // Enter the function.
+  if (auto Res = enterFunction(StoreMgr, *FuncInst, PC + 1, IsTailCall); !Res) {
     return Unexpect(Res);
   } else {
     PC = (*Res) - 1;
