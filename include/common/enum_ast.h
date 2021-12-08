@@ -104,6 +104,8 @@ enum class OpCode : uint16_t {
   Return = 0x0F,
   Call = 0x10,
   Call_indirect = 0x11,
+  Return_call = 0x12,
+  Return_call_indirect = 0x13,
 
   // Reference Instructions
   Ref__null = 0xD0,
@@ -588,6 +590,8 @@ static inline std::unordered_map<OpCode, std::string> OpCodeStr = {
     {OpCode::Return, "return"},
     {OpCode::Call, "call"},
     {OpCode::Call_indirect, "call_indirect"},
+    {OpCode::Return_call, "return_call"},
+    {OpCode::Return_call_indirect, "return_call_indirect"},
 
     // Reference Instructions
     {OpCode::Ref__null, "ref.null"},
