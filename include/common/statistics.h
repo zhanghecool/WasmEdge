@@ -20,6 +20,7 @@
 #include "common/span.h"
 #include "common/timer.h"
 
+#include <atomic>
 #include <vector>
 
 namespace WasmEdge {

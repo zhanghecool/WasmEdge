@@ -20,6 +20,7 @@
 #include "common/span.h"
 
 #include <cstdint>
+#include <mutex>
 #include <string_view>
 
 namespace WasmEdge {
@@ -32,6 +33,10 @@ public:
 
   Expect<void> compile(Span<const Byte> Data, const AST::Module &Module,
                        std::filesystem::path OutputPath);
+
+  struct CompileContext;
+
+private:
   void compile(const AST::ImportSection &ImportSection);
   void compile(const AST::ExportSection &ExportSection);
   void compile(const AST::TypeSection &TypeSection);
@@ -43,9 +48,7 @@ public:
   void compile(const AST::FunctionSection &FunctionSection,
                const AST::CodeSection &CodeSection);
 
-  struct CompileContext;
-
-private:
+  std::mutex Mutex;
   CompileContext *Context;
   const Configure Conf;
 };

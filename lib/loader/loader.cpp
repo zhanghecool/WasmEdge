@@ -59,6 +59,7 @@ Loader::loadFile(const std::filesystem::path &FilePath) {
 Expect<std::unique_ptr<AST::Module>>
 Loader::parseModule(const std::filesystem::path &FilePath) {
   using namespace std::literals::string_view_literals;
+  std::lock_guard Lock(Mutex);
   // Set path and check the header.
   if (auto Res = FMgr.setPath(FilePath); !Res) {
     spdlog::error(Res.error());
@@ -121,6 +122,7 @@ Loader::parseModule(const std::filesystem::path &FilePath) {
 // Parse module from byte code. See "include/loader/loader.h".
 Expect<std::unique_ptr<AST::Module>>
 Loader::parseModule(Span<const uint8_t> Code) {
+  std::lock_guard Lock(Mutex);
   if (auto Res = FMgr.setCode(Code); !Res) {
     return Unexpect(Res);
   }

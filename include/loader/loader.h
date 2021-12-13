@@ -21,6 +21,7 @@
 #include "loader/filemgr.h"
 #include "loader/ldmgr.h"
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -81,7 +82,8 @@ public:
   ~Loader() noexcept = default;
 
   /// Load data from file path.
-  Expect<std::vector<Byte>> loadFile(const std::filesystem::path &FilePath);
+  static Expect<std::vector<Byte>>
+  loadFile(const std::filesystem::path &FilePath);
 
   /// Parse module from file path.
   Expect<std::unique_ptr<AST::Module>>
@@ -208,6 +210,7 @@ private:
   FileMgr FMgr;
   LDMgr LMgr;
   const AST::Module::IntrinsicsTable *IntrinsicsTable;
+  std::recursive_mutex Mutex;
   bool HasDataSection;
   /// @}
 };
