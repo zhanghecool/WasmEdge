@@ -22,6 +22,8 @@
 #include "runtime/instance/table.h"
 
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <type_traits>
 #include <vector>
 
@@ -58,88 +60,111 @@ public:
 
   /// Import instances and move owner to store manager.
   template <typename... Args> uint32_t importModule(Args &&...Values) {
-    uint32_t ModAddr =
-        importInstance(ImpModInsts, ModInsts, std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    uint32_t ModAddr = unsafeImportInstance(ImpModInsts, ModInsts,
+                                            std::forward<Args>(Values)...);
     ModInsts.back()->Addr = ModAddr;
     ModMap.emplace(ModInsts.back()->getModuleName(), ModAddr);
     return ModAddr;
   }
   template <typename... Args> uint32_t importFunction(Args &&...Values) {
-    return importInstance(ImpFuncInsts, FuncInsts,
-                          std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpFuncInsts, FuncInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t importTable(Args &&...Values) {
-    return importInstance(ImpTabInsts, TabInsts, std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpTabInsts, TabInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t importMemory(Args &&...Values) {
-    return importInstance(ImpMemInsts, MemInsts, std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpMemInsts, MemInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t importGlobal(Args &&...Values) {
-    return importInstance(ImpGlobInsts, GlobInsts,
-                          std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpGlobInsts, GlobInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t importElement(Args &&...Values) {
-    return importInstance(ImpElemInsts, ElemInsts,
-                          std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpElemInsts, ElemInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t importData(Args &&...Values) {
-    return importInstance(ImpDataInsts, DataInsts,
-                          std::forward<Args>(Values)...);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportInstance(ImpDataInsts, DataInsts,
+                                std::forward<Args>(Values)...);
   }
 
   /// Import host instances but not move ownership.
   uint32_t importHostFunction(Instance::FunctionInstance &Func) {
-    return importHostInstance(Func, FuncInsts);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportHostInstance(Func, FuncInsts);
   }
   uint32_t importHostTable(Instance::TableInstance &Tab) {
-    return importHostInstance(Tab, TabInsts);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportHostInstance(Tab, TabInsts);
   }
   uint32_t importHostMemory(Instance::MemoryInstance &Mem) {
-    return importHostInstance(Mem, MemInsts);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportHostInstance(Mem, MemInsts);
   }
   uint32_t importHostGlobal(Instance::GlobalInstance &Glob) {
-    return importHostInstance(Glob, GlobInsts);
+    auto Lock = std::unique_lock(Mutex);
+    return unsafeImportHostInstance(Glob, GlobInsts);
   }
 
   /// Insert instances for instantiation and move ownership to store manager.
   template <typename... Args> uint32_t pushModule(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumMod;
-    uint32_t ModAddr =
-        importInstance(ImpModInsts, ModInsts, std::forward<Args>(Values)...);
+    uint32_t ModAddr = unsafeImportInstance(ImpModInsts, ModInsts,
+                                            std::forward<Args>(Values)...);
     ModInsts.back()->Addr = ModAddr;
     return ModAddr;
   }
   template <typename... Args> uint32_t pushFunction(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumFunc;
-    return importInstance(ImpFuncInsts, FuncInsts,
-                          std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpFuncInsts, FuncInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t pushTable(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumTab;
-    return importInstance(ImpTabInsts, TabInsts, std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpTabInsts, TabInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t pushMemory(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumMem;
-    return importInstance(ImpMemInsts, MemInsts, std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpMemInsts, MemInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t pushGlobal(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumGlob;
-    return importInstance(ImpGlobInsts, GlobInsts,
-                          std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpGlobInsts, GlobInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t pushElement(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumElem;
-    return importInstance(ImpElemInsts, ElemInsts,
-                          std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpElemInsts, ElemInsts,
+                                std::forward<Args>(Values)...);
   }
   template <typename... Args> uint32_t pushData(Args &&...Values) {
+    auto Lock = std::unique_lock(Mutex);
     ++NumData;
-    return importInstance(ImpDataInsts, DataInsts,
-                          std::forward<Args>(Values)...);
+    return unsafeImportInstance(ImpDataInsts, DataInsts,
+                                std::forward<Args>(Values)...);
   }
 
   /// Pop temp. module. Dangerous function for used when instantiating only.
   void popModule() {
+    auto Lock = std::unique_lock(Mutex);
     if (NumMod > 0) {
       --NumMod;
       ImpModInsts.pop_back();
@@ -149,35 +174,48 @@ public:
 
   /// Get instance from store manager by address.
   Expect<Instance::ModuleInstance *> getModule(const uint32_t Addr) {
-    return getInstance(Addr, ModInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, ModInsts);
   }
   Expect<Instance::FunctionInstance *> getFunction(const uint32_t Addr) {
-    return getInstance(Addr, FuncInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, FuncInsts);
   }
   Expect<Instance::TableInstance *> getTable(const uint32_t Addr) {
-    return getInstance(Addr, TabInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, TabInsts);
   }
   Expect<Instance::MemoryInstance *> getMemory(const uint32_t Addr) {
-    return getInstance(Addr, MemInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, MemInsts);
   }
   Expect<Instance::GlobalInstance *> getGlobal(const uint32_t Addr) {
-    return getInstance(Addr, GlobInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, GlobInsts);
   }
   Expect<Instance::ElementInstance *> getElement(const uint32_t Addr) {
-    return getInstance(Addr, ElemInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, ElemInsts);
   }
   Expect<Instance::DataInstance *> getData(const uint32_t Addr) {
-    return getInstance(Addr, DataInsts);
+    auto Lock = std::shared_lock(Mutex);
+    return unsafeGetInstance(Addr, DataInsts);
   }
 
   /// Get list of registered modules.
-  const std::map<std::string, uint32_t, std::less<>> &
-  getModuleList() const noexcept {
-    return ModMap;
+  size_t getModuleListSize() const {
+    auto Lock = std::shared_lock(Mutex);
+    return ModMap.size();
+  }
+
+  template <typename CallbackT> auto getModuleList(CallbackT &&CallBack) const {
+    auto Lock = std::shared_lock(Mutex);
+    return std::forward<CallbackT>(CallBack)(ModMap);
   }
 
   /// Get active instance of instantiated module.
   Expect<Instance::ModuleInstance *> getActiveModule() const {
+    auto Lock = std::shared_lock(Mutex);
     if (NumMod > 0) {
       return ModInsts.back();
     }
@@ -187,6 +225,7 @@ public:
 
   /// Find module by name.
   Expect<Instance::ModuleInstance *> findModule(std::string_view Name) const {
+    auto Lock = std::shared_lock(Mutex);
     for (uint32_t I = 0; I < ModInsts.size() - NumMod; I++) {
       if (ModInsts[I]->getModuleName() == Name) {
         return ModInsts[I];
@@ -198,6 +237,7 @@ public:
 
   /// Reset store.
   void reset(bool IsResetRegistered = false) {
+    auto Lock = std::unique_lock(Mutex);
     if (IsResetRegistered) {
       NumMod = 0;
       NumFunc = 0;
@@ -264,8 +304,8 @@ private:
   /// Helper function for importing instances and move ownership.
   template <typename T, typename... Args>
   std::enable_if_t<IsInstanceV<T>, uint32_t>
-  importInstance(std::vector<std::unique_ptr<T>> &ImpInstsVec,
-                 std::vector<T *> &InstsVec, Args &&...Values) {
+  unsafeImportInstance(std::vector<std::unique_ptr<T>> &ImpInstsVec,
+                       std::vector<T *> &InstsVec, Args &&...Values) {
     const auto Addr = static_cast<uint32_t>(InstsVec.size());
     ImpInstsVec.push_back(std::make_unique<T>(std::forward<Args>(Values)...));
     InstsVec.push_back(ImpInstsVec.back().get());
@@ -275,7 +315,7 @@ private:
   /// Helper function for importing host instances.
   template <typename T>
   std::enable_if_t<IsImportEntityV<T>, uint32_t>
-  importHostInstance(T &Inst, std::vector<T *> &InstsVec) {
+  unsafeImportHostInstance(T &Inst, std::vector<T *> &InstsVec) {
     const auto Addr = static_cast<uint32_t>(InstsVec.size());
     InstsVec.push_back(&Inst);
     return Addr;
@@ -284,13 +324,15 @@ private:
   /// Helper function for getting instance from instance vector.
   template <typename T>
   std::enable_if_t<IsInstanceV<T>, Expect<T *>>
-  getInstance(const uint32_t Addr, const std::vector<T *> &InstsVec) {
+  unsafeGetInstance(const uint32_t Addr, const std::vector<T *> &InstsVec) {
     if (Addr >= static_cast<uint32_t>(InstsVec.size())) {
       // Error logging need to be handled in caller.
       return Unexpect(ErrCode::WrongInstanceAddress);
     }
     return InstsVec[Addr];
   }
+
+  mutable std::shared_mutex Mutex;
 
   /// \name Store owned instances by StoreManager.
   /// @{
